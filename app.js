@@ -1,11 +1,54 @@
-// レシピアプリ メインクラス
+// Firebase SDK imports
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import {
+    getAuth,
+    signInWithPopup,
+    signOut,
+    GoogleAuthProvider,
+    onAuthStateChanged
+} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import {
+    getFirestore,
+    collection,
+    doc,
+    addDoc,
+    updateDoc,
+    deleteDoc,
+    onSnapshot,
+    query,
+    orderBy,
+    serverTimestamp
+} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+// Firebase configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyCBTllDaEyIww1R89mbrsYDnBgKEjXX-UI",
+    authDomain: "family-recipe-book-6b2b8.firebaseapp.com",
+    projectId: "family-recipe-book-6b2b8",
+    storageBucket: "family-recipe-book-6b2b8.firebasestorage.app",
+    messagingSenderId: "117031612843",
+    appId: "1:117031612843:web:c0ea3e5bb884bf9570a2ee",
+    measurementId: "G-VY0MJ123FL"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+// Recipe App Class
 class RecipeApp {
     constructor() {
-        this.recipes = this.loadRecipes();
+        this.recipes = [];
         this.currentRecipeId = null;
         this.currentPhotoData = null;
+        this.unsubscribe = null;
 
         // DOM要素
+        this.loginScreen = document.getElementById('login-screen');
+        this.appContainer = document.getElementById('app-container');
+        this.loadingOverlay = document.getElementById('loading-overlay');
         this.recipeGrid = document.getElementById('recipe-grid');
         this.recipeCount = document.getElementById('recipe-count');
         this.cookedCount = document.getElementById('cooked-count');
@@ -18,19 +61,91 @@ class RecipeApp {
 
         // フォーム
         this.recipeForm = document.getElementById('recipe-form');
-        this.categoryInput = document.getElementById('recipe-category');
         this.categoryDatalist = document.getElementById('category-list');
 
         this.init();
     }
 
     init() {
-        // イベントリスナーの設定
+        this.setupAuthListeners();
         this.setupEventListeners();
-        // カテゴリリストの更新
-        this.updateCategoryOptions();
-        // レシピ一覧の描画
-        this.renderRecipes();
+    }
+
+    // 認証リスナー
+    setupAuthListeners() {
+        // ログインボタン
+        document.getElementById('google-login-btn').addEventListener('click', () => this.login());
+        document.getElementById('logout-btn').addEventListener('click', () => this.logout());
+
+        // 認証状態の監視
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                this.showApp(user);
+                this.subscribeToRecipes();
+            } else {
+                this.showLogin();
+            }
+        });
+    }
+
+    async login() {
+        try {
+            this.showLoading();
+            await signInWithPopup(auth, provider);
+        } catch (error) {
+            console.error('Login error:', error);
+            alert('ログインに失敗しました');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    async logout() {
+        try {
+            if (this.unsubscribe) {
+                this.unsubscribe();
+            }
+            await signOut(auth);
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+    }
+
+    showLogin() {
+        this.loginScreen.style.display = 'flex';
+        this.appContainer.style.display = 'none';
+    }
+
+    showApp(user) {
+        this.loginScreen.style.display = 'none';
+        this.appContainer.style.display = 'block';
+
+        // ユーザー情報を表示
+        document.getElementById('user-avatar').src = user.photoURL || '';
+        document.getElementById('user-name').textContent = user.displayName || 'ユーザー';
+    }
+
+    showLoading() {
+        this.loadingOverlay.style.display = 'flex';
+    }
+
+    hideLoading() {
+        this.loadingOverlay.style.display = 'none';
+    }
+
+    // Firestoreからレシピをリアルタイム取得
+    subscribeToRecipes() {
+        const recipesRef = collection(db, 'recipes');
+        const q = query(recipesRef, orderBy('createdAt', 'desc'));
+
+        this.unsubscribe = onSnapshot(q, (snapshot) => {
+            this.recipes = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            this.updateCategoryOptions();
+            this.renderRecipes();
+        });
     }
 
     setupEventListeners() {
@@ -74,16 +189,6 @@ class RecipeApp {
                 this.closeDetailModal();
             }
         });
-    }
-
-    // データ管理
-    loadRecipes() {
-        const data = localStorage.getItem('familyRecipes');
-        return data ? JSON.parse(data) : [];
-    }
-
-    saveRecipes() {
-        localStorage.setItem('familyRecipes', JSON.stringify(this.recipes));
     }
 
     // カテゴリ一覧を取得
@@ -189,55 +294,64 @@ class RecipeApp {
     }
 
     // レシピ追加
-    handleAddRecipe(e) {
+    async handleAddRecipe(e) {
         e.preventDefault();
 
         const recipe = {
-            id: Date.now(),
             name: document.getElementById('recipe-name').value.trim(),
             url: document.getElementById('recipe-url').value.trim(),
             category: document.getElementById('recipe-category').value.trim() || null,
             cooked: false,
             rating: 0,
             logs: [],
-            createdAt: new Date().toISOString()
+            createdAt: serverTimestamp(),
+            createdBy: auth.currentUser.uid,
+            createdByName: auth.currentUser.displayName
         };
 
-        this.recipes.unshift(recipe);
-        this.saveRecipes();
-        this.updateCategoryOptions();
-        this.renderRecipes();
-        this.closeAddModal();
+        try {
+            this.showLoading();
+            await addDoc(collection(db, 'recipes'), recipe);
+            this.closeAddModal();
+        } catch (error) {
+            console.error('Error adding recipe:', error);
+            alert('レシピの追加に失敗しました');
+        } finally {
+            this.hideLoading();
+        }
     }
 
     // レシピ削除
-    deleteRecipe(id, event) {
+    async deleteRecipe(id, event) {
         event.stopPropagation();
-        if (confirm('このレシピを削除しますか？')) {
-            this.recipes = this.recipes.filter(r => r.id !== id);
-            this.saveRecipes();
-            this.updateCategoryOptions();
-            this.renderRecipes();
+        if (!confirm('このレシピを削除しますか？')) return;
+
+        try {
+            this.showLoading();
+            await deleteDoc(doc(db, 'recipes', id));
+        } catch (error) {
+            console.error('Error deleting recipe:', error);
+            alert('削除に失敗しました');
+        } finally {
+            this.hideLoading();
         }
     }
 
     // 調理済みステータスの切り替え
-    toggleCooked(id, value) {
-        const recipe = this.recipes.find(r => r.id === id);
-        if (recipe) {
-            recipe.cooked = value;
-            this.saveRecipes();
-            this.renderRecipes();
+    async toggleCooked(id, value) {
+        try {
+            await updateDoc(doc(db, 'recipes', id), { cooked: value });
+        } catch (error) {
+            console.error('Error updating cooked status:', error);
         }
     }
 
     // 評価の設定
-    setRating(id, rating) {
-        const recipe = this.recipes.find(r => r.id === id);
-        if (recipe) {
-            recipe.rating = rating;
-            this.saveRecipes();
-            this.renderRecipes();
+    async setRating(id, rating) {
+        try {
+            await updateDoc(doc(db, 'recipes', id), { rating: rating });
+        } catch (error) {
+            console.error('Error updating rating:', error);
         }
     }
 
@@ -257,22 +371,45 @@ class RecipeApp {
         this.currentPhotoData = null;
     }
 
-    // 写真選択処理
+    // 写真選択処理（圧縮付き）
     handlePhotoSelect(e) {
         const file = e.target.files[0];
         if (!file) return;
 
         const reader = new FileReader();
         reader.onload = (event) => {
-            this.currentPhotoData = event.target.result;
-            document.getElementById('photo-preview').innerHTML =
-                `<img src="${this.currentPhotoData}" alt="プレビュー">`;
+            // 画像を圧縮
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const maxSize = 800;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height && width > maxSize) {
+                    height = (height * maxSize) / width;
+                    width = maxSize;
+                } else if (height > maxSize) {
+                    width = (width * maxSize) / height;
+                    height = maxSize;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                this.currentPhotoData = canvas.toDataURL('image/jpeg', 0.7);
+                document.getElementById('photo-preview').innerHTML =
+                    `<img src="${this.currentPhotoData}" alt="プレビュー">`;
+            };
+            img.src = event.target.result;
         };
         reader.readAsDataURL(file);
     }
 
     // 調理記録を保存
-    saveLog() {
+    async saveLog() {
         const recipe = this.recipes.find(r => r.id === this.currentRecipeId);
         if (!recipe) return;
 
@@ -280,33 +417,47 @@ class RecipeApp {
             id: Date.now(),
             date: document.getElementById('log-date').value,
             note: document.getElementById('log-note').value.trim(),
-            photo: this.currentPhotoData
+            photo: this.currentPhotoData,
+            createdBy: auth.currentUser.displayName
         };
 
-        if (!recipe.logs) recipe.logs = [];
-        recipe.logs.unshift(log);
+        const logs = recipe.logs || [];
+        logs.unshift(log);
 
-        // 調理記録を追加したら自動的に「作った」にする
-        recipe.cooked = true;
-        document.getElementById('detail-cooked-checkbox').checked = true;
-
-        this.saveRecipes();
-        this.renderLogs(recipe);
-        this.renderRecipes();
-        this.hideLogForm();
+        try {
+            this.showLoading();
+            await updateDoc(doc(db, 'recipes', this.currentRecipeId), {
+                logs: logs,
+                cooked: true
+            });
+            document.getElementById('detail-cooked-checkbox').checked = true;
+            this.hideLogForm();
+        } catch (error) {
+            console.error('Error saving log:', error);
+            alert('記録の保存に失敗しました');
+        } finally {
+            this.hideLoading();
+        }
     }
 
     // 調理記録の削除
-    deleteLog(logId) {
+    async deleteLog(logId) {
         if (!confirm('この記録を削除しますか？')) return;
 
         const recipe = this.recipes.find(r => r.id === this.currentRecipeId);
         if (!recipe) return;
 
-        recipe.logs = recipe.logs.filter(l => l.id !== logId);
-        this.saveRecipes();
-        this.renderLogs(recipe);
-        this.renderRecipes();
+        const logs = (recipe.logs || []).filter(l => l.id !== logId);
+
+        try {
+            this.showLoading();
+            await updateDoc(doc(db, 'recipes', this.currentRecipeId), { logs: logs });
+        } catch (error) {
+            console.error('Error deleting log:', error);
+            alert('削除に失敗しました');
+        } finally {
+            this.hideLoading();
+        }
     }
 
     // 調理記録一覧を描画
@@ -322,6 +473,7 @@ class RecipeApp {
             <div class="log-entry">
                 <div class="log-entry-header">
                     <span class="log-entry-date">${this.formatDate(log.date)}</span>
+                    <span class="log-entry-author">${log.createdBy || ''}</span>
                     <button class="log-delete-btn" data-log-id="${log.id}">×</button>
                 </div>
                 ${log.photo ? `
@@ -364,13 +516,13 @@ class RecipeApp {
 
         switch (sortValue) {
             case 'newest':
-                recipes.sort((a, b) => b.id - a.id);
+                // Already sorted by createdAt desc from Firestore
                 break;
             case 'oldest':
-                recipes.sort((a, b) => a.id - b.id);
+                recipes.reverse();
                 break;
             case 'name':
-                recipes.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+                recipes.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ja'));
                 break;
             case 'rating-high':
                 recipes.sort((a, b) => (b.rating || 0) - (a.rating || 0));
