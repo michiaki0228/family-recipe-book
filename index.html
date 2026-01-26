@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家族のレシピブック</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- ヘッダー -->
+        <header class="app-header">
+            <h1>🍳 家族のレシピブック</h1>
+            <div class="header-controls">
+                <div class="sort-controls">
+                    <label>並び替え:</label>
+                    <select id="sort-by">
+                        <option value="newest">新しい順</option>
+                        <option value="oldest">古い順</option>
+                        <option value="name">名前順</option>
+                        <option value="rating-high">評価が高い順</option>
+                        <option value="rating-low">評価が低い順</option>
+                        <option value="cooked">作った順</option>
+                        <option value="not-cooked">未調理順</option>
+                        <option value="category">カテゴリ順</option>
+                    </select>
+                </div>
+                <div class="filter-controls">
+                    <label>カテゴリ:</label>
+                    <select id="filter-category">
+                        <option value="all">すべて</option>
+                    </select>
+                </div>
+            </div>
+        </header>
+
+        <!-- メインコンテンツ：レシピ一覧 -->
+        <main class="recipe-main">
+            <div class="recipe-stats">
+                <span id="recipe-count">0件のレシピ</span>
+                <span id="cooked-count">（0件調理済み）</span>
+            </div>
+            <div id="recipe-grid" class="recipe-grid">
+                <p class="empty-message">まだレシピが登録されていません</p>
+            </div>
+        </main>
+
+        <!-- 右下の追加ボタン -->
+        <button class="fab-button" id="open-add-form" title="レシピを追加">
+            <span>+</span>
+        </button>
+
+        <!-- レシピ追加モーダル -->
+        <div class="modal-overlay" id="add-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>新しいレシピを追加</h2>
+                    <button class="modal-close" id="close-add-form">×</button>
+                </div>
+                <form id="recipe-form">
+                    <div class="form-group">
+                        <label for="recipe-name">レシピ名 *</label>
+                        <input type="text" id="recipe-name" placeholder="例: おばあちゃんの肉じゃが" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="recipe-url">レシピURL *</label>
+                        <input type="url" id="recipe-url" placeholder="https://..." required>
+                    </div>
+                    <div class="form-group">
+                        <label for="recipe-category">カテゴリ</label>
+                        <div class="category-input-wrapper">
+                            <input type="text" id="recipe-category" list="category-list" placeholder="例: 和食、洋食、デザート">
+                            <datalist id="category-list"></datalist>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary">レシピを追加</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- レシピ詳細モーダル -->
+        <div class="modal-overlay" id="detail-modal">
+            <div class="modal-content modal-large">
+                <div class="modal-header">
+                    <h2 id="detail-title">レシピ詳細</h2>
+                    <button class="modal-close" id="close-detail">×</button>
+                </div>
+                <div class="detail-content">
+                    <div class="detail-info">
+                        <a id="detail-url" href="#" target="_blank" rel="noopener noreferrer" class="detail-link">
+                            レシピページを開く →
+                        </a>
+                        <div class="detail-meta">
+                            <span class="detail-category" id="detail-category"></span>
+                            <div class="detail-rating" id="detail-rating"></div>
+                        </div>
+                        <div class="detail-cooked">
+                            <input type="checkbox" id="detail-cooked-checkbox">
+                            <label for="detail-cooked-checkbox">作ったことがある</label>
+                        </div>
+                    </div>
+
+                    <div class="cooking-log-section">
+                        <h3>📝 調理記録</h3>
+                        <button class="btn-secondary" id="add-log-btn">新しい記録を追加</button>
+
+                        <!-- 記録追加フォーム -->
+                        <div class="log-form-container" id="log-form-container" style="display: none;">
+                            <div class="form-group">
+                                <label for="log-date">日付</label>
+                                <input type="date" id="log-date">
+                            </div>
+                            <div class="form-group">
+                                <label for="log-photo">写真</label>
+                                <input type="file" id="log-photo" accept="image/*">
+                                <div id="photo-preview" class="photo-preview"></div>
+                            </div>
+                            <div class="form-group">
+                                <label for="log-note">メモ</label>
+                                <textarea id="log-note" rows="4" placeholder="調理のコツや感想を記録..."></textarea>
+                            </div>
+                            <div class="log-form-buttons">
+                                <button class="btn-primary" id="save-log-btn">保存</button>
+                                <button class="btn-cancel" id="cancel-log-btn">キャンセル</button>
+                            </div>
+                        </div>
+
+                        <!-- 記録一覧 -->
+                        <div class="log-list" id="log-list">
+                            <p class="empty-log-message">まだ調理記録がありません</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

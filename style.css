@@ -1,0 +1,621 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+    background: #f0f2f5;
+    min-height: 100vh;
+}
+
+.app-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ヘッダー */
+.app-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px 30px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.app-header h1 {
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+}
+
+.header-controls {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.sort-controls,
+.filter-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-controls label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.header-controls select {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    cursor: pointer;
+}
+
+.header-controls select option {
+    color: #333;
+    background: white;
+}
+
+/* メインコンテンツ */
+.recipe-main {
+    flex: 1;
+    padding: 20px 30px;
+    padding-bottom: 100px;
+}
+
+.recipe-stats {
+    margin-bottom: 20px;
+    color: #666;
+    font-size: 0.95rem;
+}
+
+#cooked-count {
+    color: #28a745;
+}
+
+/* レシピグリッド */
+.recipe-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.empty-message {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: #888;
+    padding: 60px 20px;
+    background: white;
+    border-radius: 12px;
+}
+
+/* レシピカード */
+.recipe-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border-left: 4px solid #667eea;
+    position: relative;
+}
+
+.recipe-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+}
+
+.recipe-card.cooked {
+    border-left-color: #28a745;
+}
+
+.recipe-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+.recipe-card-name {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #333;
+    flex: 1;
+    margin-right: 10px;
+}
+
+.recipe-card-category {
+    background: #e9ecef;
+    color: #666;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+.recipe-card-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+}
+
+.recipe-card-rating {
+    color: #ffc107;
+    font-size: 1rem;
+    letter-spacing: 2px;
+}
+
+.recipe-card-rating .empty {
+    color: #ddd;
+}
+
+.recipe-card-badges {
+    display: flex;
+    gap: 6px;
+}
+
+.badge {
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+
+.badge-cooked {
+    background: #d4edda;
+    color: #28a745;
+}
+
+.badge-logs {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.delete-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: transparent;
+    color: #ccc;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s, color 0.2s;
+    padding: 5px;
+    line-height: 1;
+}
+
+.recipe-card:hover .delete-btn {
+    opacity: 1;
+}
+
+.delete-btn:hover {
+    color: #dc3545;
+}
+
+/* FABボタン（右下の追加ボタン） */
+.fab-button {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    font-size: 2rem;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+    transition: transform 0.2s, box-shadow 0.2s;
+    z-index: 90;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fab-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 30px rgba(102, 126, 234, 0.5);
+}
+
+/* モーダル */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: modalSlideIn 0.3s ease;
+}
+
+.modal-large {
+    max-width: 700px;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 25px;
+    border-bottom: 1px solid #eee;
+    position: sticky;
+    top: 0;
+    background: white;
+    border-radius: 16px 16px 0 0;
+}
+
+.modal-header h2 {
+    font-size: 1.3rem;
+    color: #333;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #999;
+    padding: 5px;
+    line-height: 1;
+}
+
+.modal-close:hover {
+    color: #333;
+}
+
+/* フォーム */
+form {
+    padding: 25px;
+}
+
+.form-group {
+    margin-bottom: 18px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    color: #555;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.form-group textarea {
+    resize: vertical;
+    font-family: inherit;
+}
+
+.btn-primary {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+    padding: 10px 20px;
+    background: #e9ecef;
+    color: #495057;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-secondary:hover {
+    background: #dee2e6;
+}
+
+.btn-cancel {
+    padding: 10px 20px;
+    background: transparent;
+    color: #666;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.btn-cancel:hover {
+    background: #f8f9fa;
+}
+
+/* 詳細モーダル */
+.detail-content {
+    padding: 25px;
+}
+
+.detail-info {
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.detail-link {
+    display: inline-block;
+    color: #667eea;
+    text-decoration: none;
+    font-weight: bold;
+    margin-bottom: 15px;
+    font-size: 1rem;
+}
+
+.detail-link:hover {
+    text-decoration: underline;
+}
+
+.detail-meta {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.detail-category {
+    background: #667eea;
+    color: white;
+    padding: 5px 15px;
+    border-radius: 15px;
+    font-size: 0.85rem;
+}
+
+.detail-rating {
+    display: flex;
+    gap: 5px;
+}
+
+.detail-rating .star {
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #ddd;
+    transition: color 0.2s, transform 0.1s;
+}
+
+.detail-rating .star:hover {
+    transform: scale(1.2);
+}
+
+.detail-rating .star.active {
+    color: #ffc107;
+}
+
+.detail-cooked {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.detail-cooked input {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.detail-cooked label {
+    cursor: pointer;
+    color: #555;
+}
+
+/* 調理記録セクション */
+.cooking-log-section h3 {
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.log-form-container {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 15px 0;
+}
+
+.log-form-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.log-form-buttons .btn-primary {
+    width: auto;
+    flex: 1;
+}
+
+.photo-preview {
+    margin-top: 10px;
+}
+
+.photo-preview img {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 8px;
+}
+
+/* 記録一覧 */
+.log-list {
+    margin-top: 20px;
+}
+
+.empty-log-message {
+    text-align: center;
+    color: #888;
+    padding: 30px;
+    background: #f8f9fa;
+    border-radius: 12px;
+}
+
+.log-entry {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.log-entry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.log-entry-date {
+    font-weight: bold;
+    color: #333;
+}
+
+.log-delete-btn {
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    font-size: 1.2rem;
+}
+
+.log-delete-btn:hover {
+    color: #dc3545;
+}
+
+.log-entry-photo {
+    margin-bottom: 10px;
+}
+
+.log-entry-photo img {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.log-entry-note {
+    color: #555;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+/* レスポンシブ */
+@media (max-width: 768px) {
+    .app-header {
+        padding: 15px 20px;
+    }
+
+    .app-header h1 {
+        font-size: 1.4rem;
+    }
+
+    .header-controls {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .recipe-main {
+        padding: 15px;
+        padding-bottom: 100px;
+    }
+
+    .recipe-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .fab-button {
+        bottom: 20px;
+        right: 20px;
+        width: 55px;
+        height: 55px;
+    }
+
+    .modal-content {
+        margin: 10px;
+    }
+}
+
+/* 画像拡大表示用 */
+.image-lightbox {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    cursor: pointer;
+}
+
+.image-lightbox img {
+    max-width: 95%;
+    max-height: 95%;
+    object-fit: contain;
+}
