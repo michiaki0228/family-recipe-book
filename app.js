@@ -164,40 +164,8 @@ class RecipeApp {
                window.navigator.standalone === true;
     }
 
-    // SafariでURLを開く（iOS用）
-    openInSafari(url) {
-        // 方法1: x-safari-https スキームを試す（一部のiOSバージョンで動作）
-        // 方法2: 通常のリンクとして開く（Safariがデフォルトなら開く）
-
-        // httpsをx-safari-httpsに変換してSafariで開く
-        const safariUrl = url.replace('https://', 'x-safari-https://');
-
-        // まずx-safari-httpsを試す
-        const link = document.createElement('a');
-        link.href = safariUrl;
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-
     async login() {
         try {
-            // PWAモードの場合はSafariで開く
-            if (this.isStandalone()) {
-                const url = window.location.href;
-                if (confirm('ログインするにはSafariで開く必要があります。\nSafariで開きますか？')) {
-                    if (isIOS()) {
-                        // iOSではSafariを直接開く
-                        this.openInSafari(url);
-                    } else {
-                        // Androidはブラウザで開く
-                        window.open(url, '_blank');
-                    }
-                }
-                return;
-            }
-
             this.showLoading();
 
             // iOSのChromeの場合は特別な処理が必要
