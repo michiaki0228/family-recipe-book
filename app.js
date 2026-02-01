@@ -7,7 +7,9 @@ import {
     getRedirectResult,
     signOut,
     GoogleAuthProvider,
-    onAuthStateChanged
+    onAuthStateChanged,
+    browserLocalPersistence,
+    setPersistence
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import {
     getFirestore,
@@ -38,6 +40,9 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
+
+// 認証の永続性を設定（ブラウザを閉じても維持）
+setPersistence(auth, browserLocalPersistence);
 
 // Recipe App Class
 class RecipeApp {
@@ -79,30 +84,44 @@ class RecipeApp {
         document.getElementById('google-login-btn').addEventListener('click', () => this.login());
         document.getElementById('logout-btn').addEventListener('click', () => this.logout());
 
-        // リダイレクト結果を確認（モバイル対応）
-        this.checkRedirectResult();
-
-        // 認証状態の監視
+        // 認証状態の監視（リダイレクト結果より先に設定）
         onAuthStateChanged(auth, (user) => {
+            this.hideLoading();
             if (user) {
+                console.log('User logged in:', user.email);
                 this.showApp(user);
                 this.subscribeToRecipes();
             } else {
+                console.log('User not logged in');
                 this.showLogin();
             }
         });
+
+        // リダイレクト結果を確認（モバイル対応）
+        this.checkRedirectResult();
     }
 
     // リダイレクト結果を確認
     async checkRedirectResult() {
         try {
+            this.showLoading();
             const result = await getRedirectResult(auth);
-            if (result) {
+            if (result && result.user) {
                 // リダイレクトログイン成功
-                console.log('Redirect login successful');
+                console.log('Redirect login successful:', result.user.email);
             }
         } catch (error) {
             console.error('Redirect result error:', error);
+            // エラーの詳細を表示
+            if (error.code === 'auth/popup-closed-by-user') {
+                console.log('User closed the popup');
+            } else if (error.code === 'auth/cancelled-popup-request') {
+                console.log('Popup request cancelled');
+            } else {
+                alert('ログイン処理中にエラーが発生しました: ' + error.message);
+            }
+        } finally {
+            this.hideLoading();
         }
     }
 
