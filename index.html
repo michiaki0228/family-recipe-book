@@ -99,11 +99,12 @@
                         <input type="url" id="recipe-url" placeholder="https://..." required>
                     </div>
                     <div class="form-group">
-                        <label for="recipe-category">カテゴリ</label>
-                        <div class="category-input-wrapper">
-                            <input type="text" id="recipe-category" list="category-list" placeholder="例: 和食、洋食、デザート">
-                            <datalist id="category-list"></datalist>
-                        </div>
+                        <label for="recipe-category-select">カテゴリ</label>
+                        <select id="recipe-category-select">
+                            <option value="">選択してください</option>
+                            <option value="__new__">+ 新しいカテゴリを追加</option>
+                        </select>
+                        <input type="text" id="recipe-category-new" placeholder="新しいカテゴリ名を入力" style="display: none; margin-top: 10px;">
                     </div>
                     <button type="submit" class="btn-primary">レシピを追加</button>
                 </form>

@@ -80,7 +80,8 @@ class RecipeApp {
 
         // フォーム
         this.recipeForm = document.getElementById('recipe-form');
-        this.categoryDatalist = document.getElementById('category-list');
+        this.categorySelect = document.getElementById('recipe-category-select');
+        this.categoryNewInput = document.getElementById('recipe-category-new');
 
         this.init();
     }
@@ -268,6 +269,17 @@ class RecipeApp {
         // レシピ追加フォーム
         this.recipeForm.addEventListener('submit', (e) => this.handleAddRecipe(e));
 
+        // カテゴリ選択
+        this.categorySelect.addEventListener('change', () => {
+            if (this.categorySelect.value === '__new__') {
+                this.categoryNewInput.style.display = 'block';
+                this.categoryNewInput.focus();
+            } else {
+                this.categoryNewInput.style.display = 'none';
+                this.categoryNewInput.value = '';
+            }
+        });
+
         // ソート・フィルター
         this.sortBy.addEventListener('change', () => this.renderRecipes());
         this.filterCategory.addEventListener('change', () => this.renderRecipes());
@@ -316,13 +328,19 @@ class RecipeApp {
             this.filterCategory.appendChild(option);
         });
 
-        // 入力用datalist
-        this.categoryDatalist.innerHTML = '';
+        // 追加フォーム用セレクト
+        this.categorySelect.innerHTML = '<option value="">選択してください</option>';
         categories.forEach(cat => {
             const option = document.createElement('option');
             option.value = cat;
-            this.categoryDatalist.appendChild(option);
+            option.textContent = cat;
+            this.categorySelect.appendChild(option);
         });
+        // 新規追加オプション
+        const newOption = document.createElement('option');
+        newOption.value = '__new__';
+        newOption.textContent = '+ 新しいカテゴリを追加';
+        this.categorySelect.appendChild(newOption);
     }
 
     // モーダル操作
@@ -334,6 +352,8 @@ class RecipeApp {
     closeAddModal() {
         this.addModal.classList.remove('active');
         this.recipeForm.reset();
+        this.categoryNewInput.style.display = 'none';
+        this.categoryNewInput.value = '';
     }
 
     openDetailModal(recipeId) {
@@ -396,6 +416,15 @@ class RecipeApp {
         }
     }
 
+    // カテゴリを取得（選択または新規入力）
+    getSelectedCategory() {
+        const selectValue = this.categorySelect.value;
+        if (selectValue === '__new__') {
+            return this.categoryNewInput.value.trim() || null;
+        }
+        return selectValue || null;
+    }
+
     // レシピ追加
     async handleAddRecipe(e) {
         e.preventDefault();
@@ -403,7 +432,7 @@ class RecipeApp {
         const recipe = {
             name: document.getElementById('recipe-name').value.trim(),
             url: document.getElementById('recipe-url').value.trim(),
-            category: document.getElementById('recipe-category').value.trim() || null,
+            category: this.getSelectedCategory(),
             cooked: false,
             rating: 0,
             logs: [],
