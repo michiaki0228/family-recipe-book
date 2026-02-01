@@ -134,6 +134,13 @@ body {
     margin-right: 10px;
 }
 
+.recipe-card-categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 5px;
+}
+
 .recipe-card-category {
     background: #e9ecef;
     color: #666;
@@ -396,6 +403,75 @@ form {
 
 .btn-cancel:hover {
     background: #f8f9fa;
+}
+
+/* カテゴリタグ（複数選択） */
+.category-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+    min-height: 32px;
+}
+
+.category-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #667eea;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.85rem;
+}
+
+.category-tag .remove-tag {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    opacity: 0.8;
+    padding: 0;
+}
+
+.category-tag .remove-tag:hover {
+    opacity: 1;
+}
+
+.category-input-row {
+    display: flex;
+    gap: 8px;
+}
+
+.category-input-row select {
+    flex: 1;
+}
+
+.new-category-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.new-category-row input {
+    flex: 1;
+}
+
+.btn-add-category {
+    padding: 8px 15px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+.btn-add-category:hover {
+    background: #5a6fd6;
 }
 
 /* 詳細モーダル */
@@ -667,6 +743,57 @@ form {
     max-width: 95%;
     max-height: 95%;
     object-fit: contain;
+}
+
+/* ユーザー名編集 */
+.editable-name {
+    cursor: pointer;
+}
+
+.edit-name-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.8rem;
+    opacity: 0.7;
+    padding: 2px 5px;
+}
+
+.edit-name-btn:hover {
+    opacity: 1;
+}
+
+.user-name-input {
+    padding: 4px 8px;
+    border: 1px solid rgba(255,255,255,0.5);
+    border-radius: 4px;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    font-size: 0.9rem;
+    width: 120px;
+}
+
+.user-name-input::placeholder {
+    color: rgba(255,255,255,0.7);
+}
+
+/* レシピカード写真付き */
+.recipe-card-with-photo {
+    display: flex;
+    gap: 15px;
+}
+
+.recipe-card-photo {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.recipe-card-content {
+    flex: 1;
+    min-width: 0;
 }
 
 /* ログイン画面 */

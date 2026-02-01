@@ -39,7 +39,8 @@
                 <h1>🍳 家族のレシピブック</h1>
                 <div class="user-info">
                     <img id="user-avatar" src="" alt="" class="user-avatar">
-                    <span id="user-name"></span>
+                    <span id="user-name" class="editable-name" title="クリックして編集"></span>
+                    <button id="edit-name-btn" class="edit-name-btn" title="名前を編集">✏️</button>
                     <button id="logout-btn" class="logout-btn">ログアウト</button>
                 </div>
             </div>
@@ -99,12 +100,18 @@
                         <input type="url" id="recipe-url" placeholder="https://..." required>
                     </div>
                     <div class="form-group">
-                        <label for="recipe-category-select">カテゴリ</label>
-                        <select id="recipe-category-select">
-                            <option value="">選択してください</option>
-                            <option value="__new__">+ 新しいカテゴリを追加</option>
-                        </select>
-                        <input type="text" id="recipe-category-new" placeholder="新しいカテゴリ名を入力" style="display: none; margin-top: 10px;">
+                        <label>カテゴリ（複数選択可）</label>
+                        <div class="category-tags" id="selected-categories"></div>
+                        <div class="category-input-row">
+                            <select id="recipe-category-select">
+                                <option value="">カテゴリを追加</option>
+                            </select>
+                            <button type="button" class="btn-add-category" id="add-category-btn">+</button>
+                        </div>
+                        <div class="new-category-row" id="new-category-row" style="display: none;">
+                            <input type="text" id="recipe-category-new" placeholder="新しいカテゴリ名">
+                            <button type="button" class="btn-add-category" id="add-new-category-btn">追加</button>
+                        </div>
                     </div>
                     <button type="submit" class="btn-primary">レシピを追加</button>
                 </form>
@@ -147,12 +154,18 @@
                             <input type="url" id="edit-recipe-url" required>
                         </div>
                         <div class="form-group">
-                            <label for="edit-recipe-category">カテゴリ</label>
-                            <select id="edit-recipe-category">
-                                <option value="">選択してください</option>
-                                <option value="__new__">+ 新しいカテゴリを追加</option>
-                            </select>
-                            <input type="text" id="edit-recipe-category-new" placeholder="新しいカテゴリ名を入力" style="display: none; margin-top: 10px;">
+                            <label>カテゴリ（複数選択可）</label>
+                            <div class="category-tags" id="edit-selected-categories"></div>
+                            <div class="category-input-row">
+                                <select id="edit-recipe-category">
+                                    <option value="">カテゴリを追加</option>
+                                </select>
+                                <button type="button" class="btn-add-category" id="edit-add-category-btn">+</button>
+                            </div>
+                            <div class="new-category-row" id="edit-new-category-row" style="display: none;">
+                                <input type="text" id="edit-recipe-category-new" placeholder="新しいカテゴリ名">
+                                <button type="button" class="btn-add-category" id="edit-add-new-category-btn">追加</button>
+                            </div>
                         </div>
                         <div class="edit-form-buttons">
                             <button class="btn-primary" id="save-edit-btn">保存</button>
