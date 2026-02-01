@@ -143,6 +143,12 @@ body {
     white-space: nowrap;
 }
 
+.recipe-card-author {
+    font-size: 0.8rem;
+    color: #888;
+    margin-top: 4px;
+}
+
 .recipe-card-meta {
     display: flex;
     justify-content: space-between;
@@ -401,6 +407,12 @@ form {
     margin-bottom: 25px;
     padding-bottom: 20px;
     border-bottom: 1px solid #eee;
+}
+
+.detail-author {
+    color: #667eea;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
 }
 
 .detail-link {

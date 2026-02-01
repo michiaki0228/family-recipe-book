@@ -363,6 +363,7 @@ class RecipeApp {
 
         // 詳細情報を設定
         document.getElementById('detail-title').textContent = recipe.name;
+        document.getElementById('detail-author').textContent = recipe.createdByName ? `追加者: ${recipe.createdByName}` : '';
         document.getElementById('detail-url').href = recipe.url;
         document.getElementById('detail-category').textContent = recipe.category || '未分類';
         document.getElementById('detail-cooked-checkbox').checked = recipe.cooked;
@@ -702,6 +703,7 @@ class RecipeApp {
                 <div class="recipe-card-name">${this.escapeHtml(recipe.name)}</div>
                 ${recipe.category ? `<span class="recipe-card-category">${this.escapeHtml(recipe.category)}</span>` : ''}
             </div>
+            ${recipe.createdByName ? `<div class="recipe-card-author">by ${this.escapeHtml(recipe.createdByName)}</div>` : ''}
             <div class="recipe-card-meta">
                 <div class="recipe-card-rating">
                     ${stars}<span class="empty">${emptyStars}</span>
