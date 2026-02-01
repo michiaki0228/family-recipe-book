@@ -3,6 +3,8 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebas
 import {
     getAuth,
     signInWithPopup,
+    signInWithRedirect,
+    getRedirectResult,
     signOut,
     GoogleAuthProvider,
     onAuthStateChanged
@@ -77,6 +79,9 @@ class RecipeApp {
         document.getElementById('google-login-btn').addEventListener('click', () => this.login());
         document.getElementById('logout-btn').addEventListener('click', () => this.logout());
 
+        // リダイレクト結果を確認（モバイル対応）
+        this.checkRedirectResult();
+
         // 認証状態の監視
         onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -88,14 +93,37 @@ class RecipeApp {
         });
     }
 
+    // リダイレクト結果を確認
+    async checkRedirectResult() {
+        try {
+            const result = await getRedirectResult(auth);
+            if (result) {
+                // リダイレクトログイン成功
+                console.log('Redirect login successful');
+            }
+        } catch (error) {
+            console.error('Redirect result error:', error);
+        }
+    }
+
+    // モバイル判定
+    isMobile() {
+        return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    }
+
     async login() {
         try {
             this.showLoading();
-            await signInWithPopup(auth, provider);
+            if (this.isMobile()) {
+                // モバイルはリダイレクト方式
+                await signInWithRedirect(auth, provider);
+            } else {
+                // PCはポップアップ方式
+                await signInWithPopup(auth, provider);
+            }
         } catch (error) {
             console.error('Login error:', error);
             alert('ログインに失敗しました');
-        } finally {
             this.hideLoading();
         }
     }
