@@ -304,6 +304,23 @@ class RecipeApp {
                 this.closeDetailModal();
             }
         });
+
+        // 編集機能
+        document.getElementById('edit-recipe-btn').addEventListener('click', () => this.showEditMode());
+        document.getElementById('cancel-edit-btn').addEventListener('click', () => this.hideEditMode());
+        document.getElementById('save-edit-btn').addEventListener('click', () => this.saveEdit());
+
+        // 編集フォームのカテゴリ選択
+        document.getElementById('edit-recipe-category').addEventListener('change', (e) => {
+            const newInput = document.getElementById('edit-recipe-category-new');
+            if (e.target.value === '__new__') {
+                newInput.style.display = 'block';
+                newInput.focus();
+            } else {
+                newInput.style.display = 'none';
+                newInput.value = '';
+            }
+        });
     }
 
     // カテゴリ一覧を取得
@@ -341,6 +358,20 @@ class RecipeApp {
         newOption.value = '__new__';
         newOption.textContent = '+ 新しいカテゴリを追加';
         this.categorySelect.appendChild(newOption);
+
+        // 編集フォーム用セレクト
+        const editCategorySelect = document.getElementById('edit-recipe-category');
+        editCategorySelect.innerHTML = '<option value="">選択してください</option>';
+        categories.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat;
+            option.textContent = cat;
+            editCategorySelect.appendChild(option);
+        });
+        const editNewOption = document.createElement('option');
+        editNewOption.value = '__new__';
+        editNewOption.textContent = '+ 新しいカテゴリを追加';
+        editCategorySelect.appendChild(editNewOption);
     }
 
     // モーダル操作
@@ -376,6 +407,7 @@ class RecipeApp {
 
         // フォームをリセット
         this.hideLogForm();
+        this.hideEditMode();
 
         this.detailModal.classList.add('active');
     }
@@ -383,6 +415,88 @@ class RecipeApp {
     closeDetailModal() {
         this.detailModal.classList.remove('active');
         this.currentRecipeId = null;
+        this.hideEditMode();
+    }
+
+    // 編集モード表示
+    showEditMode() {
+        const recipe = this.recipes.find(r => r.id === this.currentRecipeId);
+        if (!recipe) return;
+
+        // 現在の値をフォームにセット
+        document.getElementById('edit-recipe-name').value = recipe.name || '';
+        document.getElementById('edit-recipe-url').value = recipe.url || '';
+
+        const categorySelect = document.getElementById('edit-recipe-category');
+        const categoryNewInput = document.getElementById('edit-recipe-category-new');
+
+        // カテゴリが既存のものかチェック
+        const categories = this.getCategories();
+        if (recipe.category && categories.includes(recipe.category)) {
+            categorySelect.value = recipe.category;
+            categoryNewInput.style.display = 'none';
+        } else if (recipe.category) {
+            categorySelect.value = '__new__';
+            categoryNewInput.value = recipe.category;
+            categoryNewInput.style.display = 'block';
+        } else {
+            categorySelect.value = '';
+            categoryNewInput.style.display = 'none';
+        }
+
+        // 表示切り替え
+        document.getElementById('detail-view-mode').style.display = 'none';
+        document.getElementById('detail-edit-mode').style.display = 'block';
+    }
+
+    // 編集モード非表示
+    hideEditMode() {
+        document.getElementById('detail-view-mode').style.display = 'block';
+        document.getElementById('detail-edit-mode').style.display = 'none';
+        document.getElementById('edit-recipe-category-new').style.display = 'none';
+        document.getElementById('edit-recipe-category-new').value = '';
+    }
+
+    // 編集内容を保存
+    async saveEdit() {
+        const recipe = this.recipes.find(r => r.id === this.currentRecipeId);
+        if (!recipe) return;
+
+        const name = document.getElementById('edit-recipe-name').value.trim();
+        const url = document.getElementById('edit-recipe-url').value.trim();
+
+        const categorySelect = document.getElementById('edit-recipe-category');
+        const categoryNewInput = document.getElementById('edit-recipe-category-new');
+        let category = categorySelect.value === '__new__'
+            ? categoryNewInput.value.trim()
+            : categorySelect.value;
+        category = category || null;
+
+        if (!name || !url) {
+            alert('レシピ名とURLは必須です');
+            return;
+        }
+
+        try {
+            this.showLoading();
+            await updateDoc(doc(db, 'recipes', this.currentRecipeId), {
+                name: name,
+                url: url,
+                category: category
+            });
+
+            // 表示を更新
+            document.getElementById('detail-title').textContent = name;
+            document.getElementById('detail-url').href = url;
+            document.getElementById('detail-category').textContent = category || '未分類';
+
+            this.hideEditMode();
+        } catch (error) {
+            console.error('Error updating recipe:', error);
+            alert('更新に失敗しました');
+        } finally {
+            this.hideLoading();
+        }
     }
 
     // 詳細モーダルの評価を描画

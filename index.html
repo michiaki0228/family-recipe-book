@@ -119,7 +119,8 @@
                     <button class="modal-close" id="close-detail">×</button>
                 </div>
                 <div class="detail-content">
-                    <div class="detail-info">
+                    <!-- 表示モード -->
+                    <div class="detail-info" id="detail-view-mode">
                         <div class="detail-author" id="detail-author"></div>
                         <a id="detail-url" href="#" target="_blank" rel="noopener noreferrer" class="detail-link">
                             レシピページを開く →
@@ -131,6 +132,31 @@
                         <div class="detail-cooked">
                             <input type="checkbox" id="detail-cooked-checkbox">
                             <label for="detail-cooked-checkbox">作ったことがある</label>
+                        </div>
+                        <button class="btn-edit" id="edit-recipe-btn">✏️ 編集</button>
+                    </div>
+
+                    <!-- 編集モード -->
+                    <div class="detail-info edit-form-container" id="detail-edit-mode" style="display: none;">
+                        <div class="form-group">
+                            <label for="edit-recipe-name">レシピ名</label>
+                            <input type="text" id="edit-recipe-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-recipe-url">レシピURL</label>
+                            <input type="url" id="edit-recipe-url" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-recipe-category">カテゴリ</label>
+                            <select id="edit-recipe-category">
+                                <option value="">選択してください</option>
+                                <option value="__new__">+ 新しいカテゴリを追加</option>
+                            </select>
+                            <input type="text" id="edit-recipe-category-new" placeholder="新しいカテゴリ名を入力" style="display: none; margin-top: 10px;">
+                        </div>
+                        <div class="edit-form-buttons">
+                            <button class="btn-primary" id="save-edit-btn">保存</button>
+                            <button class="btn-cancel" id="cancel-edit-btn">キャンセル</button>
                         </div>
                     </div>
 
