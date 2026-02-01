@@ -42,7 +42,19 @@ const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 // 認証の永続性を設定（ブラウザを閉じても維持）
-setPersistence(auth, browserLocalPersistence);
+setPersistence(auth, browserLocalPersistence).catch(err => {
+    console.warn('Persistence setting failed:', err);
+});
+
+// iOSのChromeかどうかを判定
+function isIOSChrome() {
+    return /CriOS/i.test(navigator.userAgent);
+}
+
+// iOSかどうかを判定
+function isIOS() {
+    return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
 
 // Recipe App Class
 class RecipeApp {
@@ -104,21 +116,37 @@ class RecipeApp {
     // リダイレクト結果を確認
     async checkRedirectResult() {
         try {
-            this.showLoading();
+            // 認証待ちフラグがある場合のみローディングを表示
+            const authPending = sessionStorage.getItem('auth_pending');
+            if (authPending) {
+                this.showLoading();
+                console.log('Auth pending flag found, checking redirect result...');
+            }
+
             const result = await getRedirectResult(auth);
             if (result && result.user) {
-                // リダイレクトログイン成功
                 console.log('Redirect login successful:', result.user.email);
+                sessionStorage.removeItem('auth_pending');
+            } else if (authPending) {
+                // リダイレクト結果がないが認証待ちフラグがある場合
+                console.log('No redirect result but auth was pending');
+                // onAuthStateChangedで処理されるので、ここでは何もしない
             }
         } catch (error) {
             console.error('Redirect result error:', error);
-            // エラーの詳細を表示
+            sessionStorage.removeItem('auth_pending');
+
             if (error.code === 'auth/popup-closed-by-user') {
                 console.log('User closed the popup');
             } else if (error.code === 'auth/cancelled-popup-request') {
                 console.log('Popup request cancelled');
+            } else if (error.code === 'auth/missing-initial-state') {
+                // iOSのChromeでよく発生するエラー
+                console.log('Missing initial state - common on iOS Chrome');
+                // このエラーは無視して、onAuthStateChangedに任せる
             } else {
-                alert('ログイン処理中にエラーが発生しました: ' + error.message);
+                console.error('Auth error details:', error.code, error.message);
+                // ユーザーへの通知は最小限に
             }
         } finally {
             this.hideLoading();
@@ -142,13 +170,10 @@ class RecipeApp {
             if (this.isStandalone()) {
                 const url = window.location.href;
                 if (confirm('ログインするにはブラウザで開く必要があります。\nブラウザで開きますか？')) {
-                    // iOSの場合はコピーを促す、Androidの場合は直接開く
-                    if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-                        // iOSはwindow.openが効かないことがあるので、URLをコピー
+                    if (isIOS()) {
                         await navigator.clipboard.writeText(url);
                         alert('URLをコピーしました。\nSafariを開いて貼り付けてください。');
                     } else {
-                        // Androidはブラウザで開く
                         window.open(url, '_blank');
                     }
                 }
@@ -156,17 +181,39 @@ class RecipeApp {
             }
 
             this.showLoading();
-            if (this.isMobile()) {
-                // モバイルはリダイレクト方式
+
+            // iOSのChromeの場合は特別な処理が必要
+            // CriOSはポップアップがブロックされやすいため、リダイレクト方式を使用
+            if (isIOSChrome()) {
+                console.log('iOS Chrome detected, using redirect method');
+                // sessionStorageに認証開始フラグを保存
+                sessionStorage.setItem('auth_pending', 'true');
                 await signInWithRedirect(auth, provider);
-            } else {
-                // PCはポップアップ方式
-                await signInWithPopup(auth, provider);
+                return;
             }
+
+            // その他のブラウザではポップアップを試行
+            console.log('Using popup method');
+            await signInWithPopup(auth, provider);
         } catch (error) {
             console.error('Login error:', error);
-            alert('ログインに失敗しました');
-            this.hideLoading();
+            // ポップアップがブロックされた場合はリダイレクト方式にフォールバック
+            if (error.code === 'auth/popup-blocked' ||
+                error.code === 'auth/popup-closed-by-user' ||
+                error.code === 'auth/cancelled-popup-request') {
+                console.log('Popup failed, trying redirect...');
+                try {
+                    sessionStorage.setItem('auth_pending', 'true');
+                    await signInWithRedirect(auth, provider);
+                } catch (redirectError) {
+                    console.error('Redirect also failed:', redirectError);
+                    alert('ログインに失敗しました。\nSafariでこのページを開いてお試しください。');
+                    this.hideLoading();
+                }
+            } else {
+                alert('ログインに失敗しました: ' + error.message);
+                this.hideLoading();
+            }
         }
     }
 
