@@ -111,8 +111,31 @@ class RecipeApp {
         return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     }
 
+    // PWA（スタンドアロンモード）判定
+    isStandalone() {
+        return window.matchMedia('(display-mode: standalone)').matches ||
+               window.navigator.standalone === true;
+    }
+
     async login() {
         try {
+            // PWAモードの場合はブラウザで開くように案内
+            if (this.isStandalone()) {
+                const url = window.location.href;
+                if (confirm('ログインするにはブラウザで開く必要があります。\nブラウザで開きますか？')) {
+                    // iOSの場合はコピーを促す、Androidの場合は直接開く
+                    if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                        // iOSはwindow.openが効かないことがあるので、URLをコピー
+                        await navigator.clipboard.writeText(url);
+                        alert('URLをコピーしました。\nSafariを開いて貼り付けてください。');
+                    } else {
+                        // Androidはブラウザで開く
+                        window.open(url, '_blank');
+                    }
+                }
+                return;
+            }
+
             this.showLoading();
             if (this.isMobile()) {
                 // モバイルはリダイレクト方式
